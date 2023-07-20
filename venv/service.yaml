@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: voting-machine
+  labels:
+    app: nginx
+    tier: backend
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+      tier: frontend
+# By default it takes ClusterIp as a type in service to allocate the ip to the service by kubernetes
+# There are 4 types - ClusterIp,NodePort,LoadBalancer,ExternalName
+  type: NodePort
+  ports:
+     - protocol:
+       targetPort: 80
+       port: 80
+       nodePort: 30007
+###Loadbalancer can done with cloud provinding services as AWS,Azure,GCP
+  metadata:
+    name: my-service
+    annotations:
+        service.beta.kubernetes.io/aws-load-balancer-internal: "true"     for AWS
+        service.beta.kubernetes.io/azure-load-balancer-internal: "true"   for Azure
+        networking.gke.io/load-balancer-type: "Internal"                  for GCP
+

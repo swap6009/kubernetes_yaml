@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-2
+  labels:
+    app: voting machine
+    type: frontend
+spec:
+  template:
+    metadata:
+      name: pods-2
+      labels:
+        app: voting machine
+        type: frontend
+    spec:
+    containers:
+        - name:  nginx
+          image: nginx
+  replicas: 3
+  selector:
+    matchLabels:
+      type: frontend

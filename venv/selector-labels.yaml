@@ -1,0 +1,2 @@
+kubectl get pods --selector env=dev --no-headers | wc -l
+

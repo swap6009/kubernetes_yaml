@@ -1,0 +1,21 @@
+FROM node:1.14-alpine AS builder
+# Add a work directory
+WORKDIR /app
+# cache and install dependencies
+COPY package.json .
+RUN npm install
+# Copy app files
+COPY . .
+ENV NODE_ENV production
+# Build the app
+RUN yarn build
+FROM nginx:1.21.0-alpine as production
+ENV NODE_ENV production
+# Copy build assets from builder
+COPY --from=builder /app/build /usr/share/nginx/html
+# Expose port 
+EXPOSE 80
+# Build the app
+RUN npm build
+# Run the application
+CMD ["npm","start"]

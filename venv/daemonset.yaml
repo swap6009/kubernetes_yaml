@@ -1,0 +1,22 @@
+controlplane ~ ➜  cat daemonset-fluentd.yaml 
+
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: elasticsearch
+  namespace: kube-system
+  labels:
+    k8s-app: fluentd-logging
+spec:
+  selector:
+    matchLabels:
+      name: elasticsearch
+  template:
+    metadata:
+      labels:
+        name: elasticsearch
+    spec:
+      containers:
+      - name: elasticsearch
+        image: registry.k8s.io/fluentd-elasticsearch:1.20

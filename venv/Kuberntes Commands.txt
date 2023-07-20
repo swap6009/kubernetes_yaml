@@ -1,0 +1,147 @@
+#### Deployment :
+
+
+kubectl get all
+kubectl get deployments
+kubectl create -f deployment-defintion.yaml
+kubectl get pods
+kubectl get rs / replicaset
+kubectl edit rs <rs_name>
+kubectl delete rs <rs_name>
+kubectl delete pod pod_name
+kubectl get all -o wide ( wide details can get on which node pod running )
+kubectl delete deployment <deploymentname>
+## create an pod with kubectl command -
+kubectl run nginx --image=nginx
+## Get an pod.yaml with kubectl command with dry-run -
+kubectl run nginx --image=nginx --dry-run=client -o yaml
+## create an deployment with kubectl command -
+kubectl create deployment --image=nginx nginx
+## Get an deployment.yaml with kubectl command with dry-run -
+kubectl create deployment --image=nginx nginx --dry-run=client -o yaml
+kubectl create deployment --image=nginx nginx --dry-run=client -o yaml > nginx-deployment.yaml
+kubectl create -f nginx-deployment.yaml
+kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o yaml > nginx-deployment.yaml
+kubectl create deployment httpd-frontend --image=httpd:2.4-alpine --replicas=3
+kubectl create deployment httpd-frontend --image=httpd:2.4-alpine --replicas=3 --dry-run=client -o yaml > frontend-deployment.yaml
+####name spaces
+kubectl get pods --namespace=kube-system
+kubectl create -f pod-definition.yaml --namespace=dev
+kubectl create namespace dev
+kubectl create -f namespace-definition.yaml
+# switch to a namespace
+kubectl config set-context $(kubectl config current-context) --namespace=dev
+# set quota
+kubectl create -f resource-quota-definition.yaml
+#list all namespaces
+kubectl get pods --all-namespaces
+kubectl get pods -A    same as above 37 command
+
+
+########  FOR EXAM TO SAVE TIME
+
+POD-
+kubectl run nginx --image=nginx
+kubectl run nginx --image=nginx --dry-run=client -o yaml
+kubectl run custom-nginx --image=nginx --port=8080
+DEPLOY -
+kubectl create deployment --image=nginx nginx
+kubectl create deployment --image=nginx nginx --dry-run=client -o yaml
+kubectl create deployment nginx --image=nginx --replicas=4
+kubectl scale deployment nginx --replicas=4
+kubectl create deployment nginx --image=nginx --dry-run=client -o yaml > nginx-deployment.yaml
+kubectl create deployment webapp --image kodekloud/webapp-color --replicas 3
+SERVICE -
+kubectl expose pod redis --port=6379 --name redis-service --dry-run=client -o yaml
+kubectl expose pod  redis --port=6379 --name redis-service
+kubectl create service clusterip redis --tcp=6379:6379 --dry-run=client -o yaml
+kubectl expose pod nginx --type=NodePort --port=80 --name=nginx-service --dry-run=client -o yaml
+kubectl create service nodeport nginx --tcp=80:80 --node-port=30080 --dry-run=client -o yaml
+kubectl run httpd --image httpd:alpine --port=80 --expose
+kubectl run redis --image=redis:alpine --labels=tier=db
+kubectl run redis --image=redis:alpine --labels=tier=db --dry-run=client -o yaml > redis-deployment.yaml
+
+
+### make changes in pod definition file & run following command
+## which will delete current pod & recreate with modified changes
+kubectl replace --force -f pod-definition.yaml
+
+## to see the progress if we create or delete a pod
+kubectl get pods --watch
+
+
+kubectl get pods --selector tier=frontend
+
+kubectl get all --selector env=prod
+kubectl get all --selector env=prod,bu=finance,tier=frontend
+kubectl get pods --selector env=dev --no-headers | wc -l
+
+### Add taints
+kubectl taint nodes node1 key1=value1:effect
+kubectl taint nodes node01 spray=mortein:NoSchedule
+### Remove taints
+kubectl taint nodes controlplane node-role.kubernetes.io/control-plane:NoSchedule-
+
+### Check taints on nodes
+kubectl describe node controlplane | grep -i taints
+
+kubectl describe node node01 | grep -i taints
+
+kubectl get pod webapp -o yaml > my-new-pod.yaml
+kubectl edit deployment my-deployment
+
+## Static pod identify by name-nodename ( Pod name) e.g. etcd-controlplane or you can see the pod details for ownerRefernces if kind is node it is a static pod
+## kubectl get pod <podname> -n <namespace> -o yaml 
+
+## Check static pod path , see kubelet conf file in path /var/lib/kubelet/conf.yaml cat this file & you will find the static pod path where the pod configuration file kept for creating static pod
+
+
+kubectl get pods
+kubectl top pod
+kubectl top node
+kubectl create -f deployment-definition.yaml
+kubectl get deployment
+kubectl apply -f deployment-definition.yaml
+kubectl set image deployment/myapp-deployment nginx=nginx:1.9.1
+kubectl set image deploy frontend simple-webapp=kodekloud/webapp-color:v2
+kubectl rollout status deployment/myapp-deployment
+kubectl rollout history deployment/myapp-deployment
+kubectl rollout undo deployment/myapp-deployment
+
+## Get yaml file from existing running resources ---
+kubectl get [resource type] -n [namespace] [resource Name] -o yaml > [New file name]
+
+### Pass on the arguments & commands added in definition file as an array
+kubectl run webapp-green --image=kodekloud/webapp-color -- --color green
+kubectl run < pod name > --image=< image_name > -- <args1> <args2> ...
+kubectl run < pod name > --image=< image_name > --command <commad> -- <args1> <args2> ...
+
+#### Bash script exporting yaml sub folder:
+for n in $(kubectl get -o=name pvc,configmap,serviceaccount,secret,ingress,service,deployment,statefulset,hpa,job,cronjob)
+do
+    mkdir -p $(dirname $n)
+    kubectl get -o=yaml --export $n > $n.yaml
+done
+
+#### Bash script exporting yaml to current folder:
+for n in $(kubectl get -o=name pvc,configmap,ingress,service,secret,deployment,statefulset,hpa,job,cronjob | grep -v 'secret/default-token')
+do
+    kubectl get -o=yaml --export $n > $(dirname $n)_$(basename $n).yaml
+done
+
+kubectl get secrets -n mynamespace mysecret -o yaml
+kubectl get pod mypod -o jsonpath='{.spec.containers[*].image}’ | xargs -I {} bash -c “openssl dgst -sha256 -verify public.pem -signature {}.sig {}”
+kubectl create secret generic <secret_name> --from-literal=<key>=<value> --from-literal=<key>=<value>
+kubectl create secret generic <secret_name> --from-file=/root/app_secret.properties
+kubectl create secret generic  db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --from-literal=DB_Password=password123
+
+kubectl get secrets
+kubectl describe secrets
+kubectl get secret app_secret -o yaml
+
+### convert data from plain text to encoded values
+echo -n 'mysql' | base64
+---> bXlzcWw=
+### convert encoded values to decode
+echo -n 'bXlzcWw=' | base64 --decode
+---> mysql
