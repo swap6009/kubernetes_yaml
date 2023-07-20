@@ -1,0 +1,39 @@
+controlplane ~ ➜  history 
+    1  kubectl get pods
+    2  kubectl get pods
+    3  docker container ps
+    4  kubectl get pods
+    5  ls -lrt
+    6  vi pod.yaml
+    7  kubectl create -f pod.yaml 
+    8  kubectl create -f pod.yaml 
+    9  vi pod.yaml
+   10  docker images ls
+   11  kubectl run nginx --image=nginx
+   12  kubectl get pods
+   13  cleare
+   14  clear
+   15  kubectl get pods
+   16  kubectl DESCRIBE newpods-7fd79
+----   To get the pods node where it is running & wide outputs
+       kubectl get pods -o wide
+----   To get command in yaml formats do
+       kubectl run redis --image=redis123 --dry-run -o yaml
+   17  kubectl describe newpods-7fd79
+   18  kubectl get pods
+   19  kubectl describe pod newpods-7fd79
+   20  kubectl get all
+   21  kubectl describe pod newpods-7fd79
+   22  kubectl get all
+   23  kubectl describe pod webapp
+   24  kubectl get pods
+   25  kubectl delete pod webapp
+   26  kubectl get pods
+   27  history
+   28  vi pod-definition.yaml
+   29  kubectl create -f pod-definition.yaml
+   30  kubectl get pods
+   31  vi pod-definition.yaml
+   32  kubectl apply -f pod-definition.yaml
+   33  kubectl get pods
+   34  history 
