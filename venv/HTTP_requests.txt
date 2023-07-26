@@ -1,0 +1,255 @@
+HTTP Status codes
+The server will respond with HTTP status codes that match the HTTP spec. See the section below for a breakdown of the types of status codes the server will send.
+
+The following HTTP status codes may be returned by the API.
+
+Success codes
+200 StatusOK
+Indicates that the request completed successfully.
+201 StatusCreated
+Indicates that the request to create kind completed successfully.
+204 StatusNoContent
+Indicates that the request completed successfully, and the response contains no body.
+Returned in response to HTTP OPTIONS requests.
+Error codes
+307 StatusTemporaryRedirect
+
+Indicates that the address for the requested resource has changed.
+Suggested client recovery behavior:
+Follow the redirect.
+400 StatusBadRequest
+
+Indicates the requested is invalid.
+Suggested client recovery behavior:
+Do not retry. Fix the request.
+401 StatusUnauthorized
+
+Indicates that the server can be reached and understood the request, but refuses to take any further action, because the client must provide authorization. If the client has provided authorization, the server is indicating the provided authorization is unsuitable or invalid.
+Suggested client recovery behavior:
+If the user has not supplied authorization information, prompt them for the appropriate credentials. If the user has supplied authorization information, inform them their credentials were rejected and optionally prompt them again.
+403 StatusForbidden
+
+Indicates that the server can be reached and understood the request, but refuses to take any further action, because it is configured to deny access for some reason to the requested resource by the client.
+Suggested client recovery behavior:
+Do not retry. Fix the request.
+404 StatusNotFound
+
+Indicates that the requested resource does not exist.
+Suggested client recovery behavior:
+Do not retry. Fix the request.
+405 StatusMethodNotAllowed
+
+Indicates that the action the client attempted to perform on the resource was not supported by the code.
+Suggested client recovery behavior:
+Do not retry. Fix the request.
+409 StatusConflict
+
+Indicates that either the resource the client attempted to create already exists or the requested update operation cannot be completed due to a conflict.
+Suggested client recovery behavior:
+If creating a new resource:
+Either change the identifier and try again, or GET and compare the fields in the pre-existing object and issue a PUT/update to modify the existing object.
+If updating an existing resource:
+See Conflict from the status response section below on how to retrieve more information about the nature of the conflict.
+GET and compare the fields in the pre-existing object, merge changes (if still valid according to preconditions), and retry with the updated request (including ResourceVersion).
+410 StatusGone
+
+Indicates that the item is no longer available at the server and no forwarding address is known.
+Suggested client recovery behavior:
+Do not retry. Fix the request.
+422 StatusUnprocessableEntity
+
+Indicates that the requested create or update operation cannot be completed due to invalid data provided as part of the request.
+Suggested client recovery behavior:
+Do not retry. Fix the request.
+429 StatusTooManyRequests
+
+Indicates that the either the client rate limit has been exceeded or the server has received more requests then it can process.
+Suggested client recovery behavior:
+Read the Retry-After HTTP header from the response, and wait at least that long before retrying.
+500 StatusInternalServerError
+
+Indicates that the server can be reached and understood the request, but either an unexpected internal error occurred and the outcome of the call is unknown, or the server cannot complete the action in a reasonable time (this may be due to temporary server load or a transient communication issue with another server).
+Suggested client recovery behavior:
+Retry with exponential backoff.
+503 StatusServiceUnavailable
+
+Indicates that required service is unavailable.
+Suggested client recovery behavior:
+Retry with exponential backoff.
+504 StatusServerTimeout
+
+Indicates that the request could not be completed within the given time. Clients can get this response ONLY when they specified a timeout param in the request.
+Suggested client recovery behavior:
+Increase the value of the timeout param and retry with exponential backoff.
+Response Status Kind
+Kubernetes will always return the Status kind from any API endpoint when an error occurs. Clients SHOULD handle these types of objects when appropriate.
+
+A Status kind will be returned by the API in two cases:
+
+When an operation is not successful (i.e. when the server would return a non 2xx HTTP status code).
+When a HTTP DELETE call is successful.
+The status object is encoded as JSON and provided as the body of the response. The status object contains fields for humans and machine consumers of the API to get more detailed information for the cause of the failure. The information in the status object supplements, but does not override, the HTTP status code's meaning. When fields in the status object have the same meaning as generally defined HTTP headers and that header is returned with the response, the header should be considered as having higher priority.
+
+Example:
+
+$ curl -v -k -H "Authorization: Bearer WhCDvq4VPpYhrcfmF6ei7V9qlbqTubUc" https://10.240.122.184:443/api/v1/namespaces/default/pods/grafana
+
+> GET /api/v1/namespaces/default/pods/grafana HTTP/1.1
+> User-Agent: curl/7.26.0
+> Host: 10.240.122.184
+> Accept: */*
+> Authorization: Bearer WhCDvq4VPpYhrcfmF6ei7V9qlbqTubUc
+>
+
+< HTTP/1.1 404 Not Found
+< Content-Type: application/json
+< Date: Wed, 20 May 2015 18:10:42 GMT
+< Content-Length: 232
+<
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {},
+  "status": "Failure",
+  "message": "pods \"grafana\" not found",
+  "reason": "NotFound",
+  "details": {
+    "name": "grafana",
+    "kind": "pods"
+  },
+  "code": 404
+}
+status field contains one of two possible values:
+
+Success
+Failure
+message may contain human-readable description of the error
+
+reason may contain a machine-readable, one-word, CamelCase description of why this operation is in the Failure status. If this value is empty there is no information available. The reason clarifies an HTTP status code but does not override it.
+
+details may contain extended data associated with the reason. Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type.
+
+Possible values for the reason and details fields:
+
+BadRequest
+
+Indicates that the request itself was invalid, because the request doesn't make any sense, for example deleting a read-only object.
+This is different than status reason Invalid above which indicates that the API call could possibly succeed, but the data was invalid.
+API calls that return BadRequest can never succeed.
+Http status code: 400 StatusBadRequest
+Unauthorized
+
+Indicates that the server can be reached and understood the request, but refuses to take any further action without the client providing appropriate authorization. If the client has provided authorization, this error indicates the provided credentials are insufficient or invalid.
+Details (optional):
+kind string
+The kind attribute of the unauthorized resource (on some operations may differ from the requested resource).
+name string
+The identifier of the unauthorized resource.
+HTTP status code: 401 StatusUnauthorized
+Forbidden
+
+Indicates that the server can be reached and understood the request, but refuses to take any further action, because it is configured to deny access for some reason to the requested resource by the client.
+Details (optional):
+kind string
+The kind attribute of the forbidden resource (on some operations may differ from the requested resource).
+name string
+The identifier of the forbidden resource.
+HTTP status code: 403 StatusForbidden
+NotFound
+
+Indicates that one or more resources required for this operation could not be found.
+Details (optional):
+kind string
+The kind attribute of the missing resource (on some operations may differ from the requested resource).
+name string
+The identifier of the missing resource.
+HTTP status code: 404 StatusNotFound
+AlreadyExists
+
+Indicates that the resource you are creating already exists.
+Details (optional):
+kind string
+The kind attribute of the conflicting resource.
+name string
+The identifier of the conflicting resource.
+HTTP status code: 409 StatusConflict
+Conflict
+
+Indicates that the requested update operation cannot be completed due to a conflict. The client may need to alter the request. Each resource may define custom details that indicate the nature of the conflict.
+HTTP status code: 409 StatusConflict
+Invalid
+
+Indicates that the requested create or update operation cannot be completed due to invalid data provided as part of the request.
+Details (optional):
+kind string
+the kind attribute of the invalid resource
+name string
+the identifier of the invalid resource
+causes
+One or more StatusCause entries indicating the data in the provided resource that was invalid. The reason, message, and field attributes will be set.
+HTTP status code: 422 StatusUnprocessableEntity
+Timeout
+
+Indicates that the request could not be completed within the given time. Clients may receive this response if the server has decided to rate limit the client, or if the server is overloaded and cannot process the request at this time.
+Http status code: 429 TooManyRequests
+The server should set the Retry-After HTTP header and return retryAfterSeconds in the details field of the object. A value of 0 is the default.
+ServerTimeout
+
+Indicates that the server can be reached and understood the request, but cannot complete the action in a reasonable time. This maybe due to temporary server load or a transient communication issue with another server.
+Details (optional):
+kind string
+The kind attribute of the resource being acted on.
+name string
+The operation that is being attempted.
+The server should set the Retry-After HTTP header and return retryAfterSeconds in the details field of the object. A value of 0 is the default.
+Http status code: 504 StatusServerTimeout
+MethodNotAllowed
+
+Indicates that the action the client attempted to perform on the resource was not supported by the code.
+For instance, attempting to delete a resource that can only be created.
+API calls that return MethodNotAllowed can never succeed.
+Http status code: 405 StatusMethodNotAllowed
+InternalError
+
+Indicates that an internal error occurred, it is unexpected and the outcome of the call is unknown.
+Details (optional):
+causes
+The original error.
+Http status code: 500 StatusInternalServerError code may contain the suggested HTTP return code for this status.
+
+Kubeadm tool 
+kubeadm upgrade plan
+-- current version kubeadm tool version, latest stable version, control plane components version,it shows after upgrading the control plane components manually upgarde the kubelet components
+kubeadm does not install or upgrade the kubelet
+kubeadm tool upgarde first & then kubernetes components
+
+yum upgrade -y kubeadm=1.12.0-00
+kubeadm upgrade apply v1.12.0
+- now upgrade the kubelet
+kubectl get nodes
+yum uprade kubelet=1.12.0-00 -y
+systemctl restart kubelet
+kubelet get nodes
+-Now upgrade the worker nodes one at a time
+kubectl drain node01 --ignore-daemonsets   terminate all the pods from a node & reschedule them on another and cordons the nodes & mark unschedule
+yum upgrade -y kubeadm=1.12.0-00
+yum uprade kubelet=1.12.0-00 -y
+systemctl restart kubelet
+kubectl uncordon node01
+kubelet get nodes
+
+
+kubectl -n kube-system get cm kubeadm-config -o yaml
+Note: While upgrading kubelet, if you hit dependency issues while running the apt-get upgrade kubelet command, use the apt install kubelet=1.27.0-00 command instead.
+
+
+
+  1.27.0-00
+
+apt-mark unhold kubeadm && \
+apt-get update && apt-get install -y kubeadm=1.27.0-00 && \
+apt-mark hold kubeadm
+
+apt-mark unhold kubelet kubectl && \
+apt-get update && apt-get install -y kubelet=1.27.0-00 kubectl=1.27.0-00 && \
+apt-mark hold kubelet kubectl

@@ -145,3 +145,196 @@ echo -n 'mysql' | base64
 ### convert encoded values to decode
 echo -n 'bXlzcWw=' | base64 --decode
 ---> mysql
+
+
+###
+
+kubectl logs <pod_name>
+kubectl logs <pod_name> -c init-containername
+kubectl logs <pod_name> -c containername
+
+Time wait for comeback online is known as pod eviction timeout  & it is set on contoller manager with a default value of 5 minutes
+So whenever node goes offline the master node waits upto 5 mins before considering node dead.
+
+kubectl drain node01   pods moved to another node
+kubectl uncordon node01 allow new pods to be get scheduled on the node01
+kubectl cordon node01 new pods not scheduled
+
+alias k=kubectl
+## drain node for maintanance
+kubectl drain node_name
+## Daemonsets can not removed from node so we have to ignore them
+kubectl drain node_name --ignore-daemonsets
+kubectl cordon node_name
+kubectl uncordon node_name
+## forcfully remove pods which does not have replicaset
+kubectl drain node_name --ignore-daemonsets --force
+
+
+v1 pods
+v1 replicationcontrollers
+v1 services
+apps/v* daemonsets
+apps/v* deployments
+apps/v* replicasets
+apps/v* statefulsets
+autoscaling/v* horizontalpodautoscalers
+batch/v* cronjobs
+batch/v* jobs
+
+
+Backup 
+
+Resource config
+kubectl get all --namespaces -o yaml > all-deploy-services.yaml
+available tools for backup ARK, VELERO
+etcd
+1 - etcd config directory backup
+etcd.service will give you backup directory
+/var/lib/etcd
+
+2 - Take snapshot by etcd control utility :
+ETCDCTL_API=3 etcdctl \
+snapshot save /path/snapshot.db
+--endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/etcd/cacert.crt \
+--cert=/etc/etcd/etcdserver.crt \
+--key=/etc/etcd/etcdserver.key 
+
+3 - Can view snapshot by status command
+ETCDCTL_API=3 etcdctl \
+snapshot status snapshot.db
+--endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/etcd/cacert.crt \
+--cert=/etc/etcd/etcdserver.crt \
+--key=/etc/etcd/etcdserver.key
+
+4 -  Restore backup
+Stop the kubeapi server
+service kubeapiserver stop
+Run below commad :
+
+ETCDCTL_API=3 etcdctl snapshot restore --data-dir /var/lib/etcd-from-backup /opt/snapshot-pre-boot.db
+
+restore snapshot is not done by communicating with etcd server
+
+5 - change the /etc/kubernetes/manifest/etcd.yaml add new host path in the volume field for data directory ( etcd-data)
+
+config should use the new dire so add in etcd.service the data dire path
+systemctl daemon-reload
+service etcd restart
+service kubeapiserver Start
+
+
+### How to find where the certs & keys stored for etcd service
+~ kubectl describe pod etcd-controlplane -n kube-system
+Output in command check
+Command:
+etcd
+--advertise-client-urls=https://192.14.26.9:2379
+--cert-file=/etc/kubernetes/pki/etcd/server.crt
+--client-cert-auth=true
+--data-dir=/var/lib/etcd
+--experimental-initial-corrupt-check=true
+--experimental-watch-progress-notify-interval=5s
+--initial-advertise-peer-urls=https://192.14.26.9:2380
+--initial-cluster=controlplane=https://192.14.26.9:2380
+--key-file=/etc/kubernetes/pki/etcd/server.key
+--listen-client-urls=https://127.0.0.1:2379,https://192.14.26.9:2379
+--listen-metrics-urls=http://127.0.0.1:2381
+--listen-peer-urls=https://192.14.26.9:2380
+--name=controlplane
+--peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt
+--peer-client-cert-auth=true
+--peer-key-file=/etc/kubernetes/pki/etcd/peer.key
+--peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+--snapshot-count=10000
+--trusted-ca-file=/etc/kubernetes/pki/etcd/ca.cr
+kubectl config get-clusters 
+kubectl config view
+kubectl config get-contexts
+kubectl config use-context cluster1
+kubectl get nodes 
+## etcd server details when etcd configured externally
+kubectl  describe pod kube-apiserver-cluster2-controlplane -n kube-system | grep etcd
+### list the servers from external etcd server -
+      ETCDCTL_API=3 etcdctl \
+>  --endpoints=https://127.0.0.1:2379 \
+>  --cacert=/etc/etcd/pki/ca.pem \
+>  --cert=/etc/etcd/pki/etcd.pem \
+>  --key=/etc/etcd/pki/etcd-key.pem \
+>   member list 
+
+
+
+### TLS certificate check & validate
+kubectl get pod --all-namespaces 
+kubectl describe pod kube-apiserver-controlplane -n kube-system 
+kubectl describe pod etcd-controlplane -n kube-system 
+cat /etc/kubernetes/manifests/etcd.yaml
+openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
+openssl x509 -in /etc/kubernetes/pki/etcd/server.crt -text -noout
+openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
+openssl x509 -in /etc/kubernetes/pki/ca.crt -text -noout
+kubectl get logs
+vi /etc/kubernetes/manifests/etcd.yaml
+ls -l /etc/kubernetes/pki/etcd/server-certificate.crt
+ls -l /etc/kubernetes/pki/etcd/
+vi /etc/kubernetes/manifests/etcd.yaml
+kubectl get pod --all-namespaces 
+crictl ps -a
+crictl logs kube-controller-manager
+crictl logs 9c671ffc527c5
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+ls /etc/kubernetes/pki/etcd/
+ls /etc/kubernetes/pki/
+cat /etc/kubernetes/manifests/etcd.yaml 
+crictl ps -a
+crictl logs 2f411473142e0
+cat /etc/kubernetes/manifests/etcd.yaml 
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+ls /etc/kubernetes/pki/ca.crt
+vi /etc/kubernetes/manifests/kube-apiserver.yaml
+crictl ps -a
+kubectl get pod --all-namespaces 
+kubectl describe pod kube-apiserver-controlplane -n kube-system 
+## check key
+openssl rsa -in akshay.key -check
+## Verify csr 
+openssl req -text -noout -verify  -in akshay.csr
+cat akshay.csr | base64 -w 0
+## csr request status & approve the request
+kubectl get csr
+kubectl certificate approve akshay
+## Get details of csr request
+kubectl get csr agent-smith -o yaml
+## Reject request
+kubectl certificate deny agent-smith
+## Delete csr
+kubectl delete csr agent-smith
+
+
+kubectl config use-context dev-user@production --kubeconfig /path/kubeconfig
+
+cat /etc/kubernetes/manifests/kube-apiserver.yaml   or describe the kube-apiserver pod  or check kubeapi process ps -aux | grep kubeapiserver
+
+kubectl describe pod kube-apiserver-controlplane -n kube-system  | grep authorization
+kubectl describe rolebindings.rbac.authorization.k8s.io kube-proxy -n kube-system
+kubectl auth can-i get pod -n default --as dev-user
+
+To create a Role:- kubectl create role developer --namespace=default --verb=list,create,delete --resource=pods
+To create a RoleBinding:- kubectl create rolebinding dev-user-binding --namespace=default --role=developer --user=dev-user
+
+kubectl edit role developer -n blue
+
+kubectl api-resources --namespaced=true
+kubectl api-resources --namespaced=false
+
+## cluster roles for user to get access across cluster
+kubectl create clusterrole admin --
+    
+
+kubectl get clusterroles --no-headers | wc -l
+kubectl get ClusterRoleBinding --no-headers | wc -l
+kubectl describe clusterroles cluster-admin
+kubectl describe ClusterRoleBinding cluster-admin
